@@ -142,12 +142,8 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse our multipart form, 10 << 20 specifies a maximum
-	// upload of 10 MB files.
 	r.ParseMultipartForm(config.FileUploadSizeMB << 20)
-	// FormFile returns the first file for the given key `myFile`
-	// it also returns the FileHeader so we can get the Filename,
-	// the Header and the size of the file
+	
 	file, handler, err := r.FormFile("myFile")
 	if err != nil {
 		log.Println("Error Retrieving the File")
@@ -160,8 +156,6 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Printf("File Size: %+v\n", handler.Size)
 	log.Printf("MIME Header: %+v\n", handler.Header)
 
-	// Create a temporary file within our temp-images directory that follows
-	// a particular naming pattern
 	createDir(config.UploadFolder)
 
 	tempFile, err := ioutil.TempFile(config.UploadFolder, "*-"+handler.Filename)
@@ -170,15 +164,12 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tempFile.Close()
 
-	// read all of the contents of our uploaded file into a
-	// byte array
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Println(err)
 	}
-	// write this byte array to our temporary file
+	
 	tempFile.Write(fileBytes)
-	// return that we have successfully uploaded our file!
 	fmt.Fprintf(w, "Successfully Uploaded File\n")
 }
 
