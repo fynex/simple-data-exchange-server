@@ -1,0 +1,9 @@
+{
+	  "HostPort"          : ":8000",
+	  "UploadFolder"      : "upload",
+	  "DownloadFolder"    : "download",
+	  "BasicAuthUsername" : "USERNAME_CHANGE_ME",
+	  "BasicAuthPassword" : "PASSWORD_CHANGE_ME",
+	  "BasicAuthRealm"    : "CHANGE_ME",
+    "FileUploadSizeMB"  : 100
+}
