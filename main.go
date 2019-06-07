@@ -65,6 +65,8 @@ const (
 
 	CERTCMDS = `openssl genrsa -out server.key 2048
 openssl ecparam -genkey -name secp384r1 -out server.key`
+
+	CONFIG_FILE = "./config.json"
 )
 
 var (
@@ -78,6 +80,8 @@ type Config struct {
 	BasicAuthUsername string
 	BasicAuthPassword string
 	BasicAuthRealm    string
+	ServerCert        string
+	ServerKey         string
 	FileUploadSizeMB  int64
 }
 
@@ -143,7 +147,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.ParseMultipartForm(config.FileUploadSizeMB << 20)
-	
+
 	file, handler, err := r.FormFile("myFile")
 	if err != nil {
 		log.Println("Error Retrieving the File")
@@ -156,8 +160,6 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	log.Printf("File Size: %+v\n", handler.Size)
 	log.Printf("MIME Header: %+v\n", handler.Header)
 
-	createDir(config.UploadFolder)
-
 	tempFile, err := ioutil.TempFile(config.UploadFolder, "*-"+handler.Filename)
 	if err != nil {
 		log.Println(err)
@@ -168,7 +170,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-	
+
 	tempFile.Write(fileBytes)
 	fmt.Fprintf(w, "Successfully Uploaded File\n")
 }
@@ -205,7 +207,6 @@ func createDir(path string) {
 }
 
 func setupRoutes() {
-	createDir(config.DownloadFolder)
 
 	fs := http.FileServer(http.Dir(config.DownloadFolder))
 	http.Handle("/files/", http.StripPrefix("/files", basicAuthHandler(fs)))
@@ -215,23 +216,37 @@ func setupRoutes() {
 	http.HandleFunc("/text", basicAuthHandlerFunc(sendText))
 
 	fmt.Println("[*] Listining on", config.HostPort)
-	err := http.ListenAndServeTLS(config.HostPort, "server.crt", "server.key", nil)
+	err := http.ListenAndServeTLS(config.HostPort, config.ServerCert, config.ServerKey, nil)
 
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
-		fmt.Println("[!] If you have no server.crt and server.key, run the following commands:\n\n", CERTCMDS)
+		//fmt.Println("[!] If you have no server.crt and server.key, run the following commands:\n\n", CERTCMDS)
+	}
+}
+
+func checkIfFileExists(filePath, errMessage string) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		fmt.Println("[!] File", filePath, "does not exist!\n   ", errMessage)
+		os.Exit(1)
 	}
 }
 
 func main() {
 	showIPs()
 
-	err := readConfig("./config.json")
+	checkIfFileExists(CONFIG_FILE, "Please create a configureation file named "+CONFIG_FILE)
+	err := readConfig(CONFIG_FILE)
 	if err != nil {
 		fmt.Println("")
 		log.Println(err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
+
+	createDir(config.UploadFolder)
+	createDir(config.DownloadFolder)
+
+	checkIfFileExists(config.ServerKey, config.ServerKey+" is missing. Please generate the file via:\n"+CERTCMDS)
+	checkIfFileExists(config.ServerCert, config.ServerCert+" is missing. Please generate the file via:\n"+CERTCMDS)
 
 	setupRoutes()
 }
