@@ -7,5 +7,5 @@
 	  "BasicAuthRealm"    : "A_REALM",
 	  "ServerCert"       : "server.crt",
 	  "ServerKey"        : "server.key",
-    "FileUploadSizeMB"  : 100
+	  "FileUploadSizeMB"  : 100
 }

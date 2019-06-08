@@ -63,8 +63,8 @@ const (
   </body>
 </html>`
 
-	CERTCMDS = `openssl genrsa -out server.key 2048
-openssl ecparam -genkey -name secp384r1 -out server.key`
+	CERTCMDS = `openssl ecparam -genkey -name secp384r1 -out server.key
+openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650`
 
 	CONFIG_FILE = "./config.json"
 )
@@ -202,7 +202,7 @@ func basicAuthHandlerFunc(handler http.HandlerFunc) http.HandlerFunc {
 
 func createDir(path string) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.Mkdir(path, 755)
+		os.Mkdir(path, 0755)
 	}
 }
 
