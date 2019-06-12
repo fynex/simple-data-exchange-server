@@ -64,7 +64,7 @@ const (
 </html>`
 
 	CERTCMDS = `openssl ecparam -genkey -name secp384r1 -out server.key
-openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650`
+openssl req -new -x509 -sha384 -key server.key -out server.crt -days 730`
 
 	CONFIG_FILE = "./config.json"
 )
@@ -85,7 +85,7 @@ type Config struct {
 	FileUploadSizeMB  int64
 }
 
-func readConfig(filename string) error {
+func readConfigFile(filename string) error {
 	file, err := os.Open(filename)
 
 	if err != nil {
@@ -103,6 +103,12 @@ func readConfig(filename string) error {
 }
 
 func showIPs() {
+	if len(config.HostPort) > 0 && string(config.HostPort[0]) == ":" {
+		fmt.Println("[*] Listening on the following interfaces")
+	} else {
+		fmt.Println("[*] Interface Information")
+	}
+
 	ifaces, err := net.Interfaces()
 
 	if err != nil {
@@ -111,7 +117,7 @@ func showIPs() {
 	}
 
 	for _, i := range ifaces {
-		fmt.Println("[*]", i.Name+":")
+		fmt.Println("  ", i.Name+":")
 		addrs, err := i.Addrs()
 
 		if err != nil {
@@ -231,16 +237,22 @@ func checkIfFileExists(filePath, errMessage string) {
 	}
 }
 
-func main() {
-	showIPs()
-
+func readConfig() {
 	checkIfFileExists(CONFIG_FILE, "Please create a configureation file named "+CONFIG_FILE)
-	err := readConfig(CONFIG_FILE)
+
+	err := readConfigFile(CONFIG_FILE)
+
 	if err != nil {
 		fmt.Println("")
 		log.Println(err)
 		os.Exit(1)
 	}
+}
+
+func main() {
+	readConfig()
+
+	showIPs()
 
 	createDir(config.UploadFolder)
 	createDir(config.DownloadFolder)
